@@ -34,7 +34,7 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sensor_layout);
 
-        Log.d("IP", SocketThread.IP);
+       // Log.d("IP", SocketThread.IP);
 
         xTxv = (TextView)findViewById(R.id.x);
         yTxv = (TextView)findViewById(R.id.y);
@@ -45,20 +45,25 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         mSensorManage = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         //get sensor type.
         mAccelerometer = mSensorManage.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mGravity = mSensorManage.getDefaultSensor(Sensor.TYPE_GRAVITY);
+
 
         handler = new mHandler();
 
-        clientThread = new SocketThread(handler);
-        new Thread(clientThread).start();
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //regist accelerometer
-        mSensorManage.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
 
+
+        clientThread = new SocketThread(handler);
+        new Thread(clientThread).start();
+
+        //regist accelerometer
+        mSensorManage.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManage.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -74,11 +79,22 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         if(clientThread.os != null) {
             try {
                 clientThread.os.close();
+                Log.d("DEB","os.close()");
             } catch (IOException e) {
                 e.printStackTrace();
                 if(clientThread.s != null) {
                     try {
                         clientThread.s.close();
+                        Log.d("DEB","s.close");
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            } finally {
+                if(clientThread.s != null) {
+                    try {
+                        clientThread.s.close();
+                        Log.d("DEB","s.close");
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -99,19 +115,28 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         switch (sensorType)
         {
             case Sensor.TYPE_ACCELEROMETER:
-                bundle.putString("time", ""+curTime);
+                bundle.putString("t", ""+curTime);
                 bundle.putString("x",""+sensorEvent.values[0]);
                 bundle.putString("y",""+sensorEvent.values[1]);
                 bundle.putString("z",""+sensorEvent.values[2]);
                 msg.what = Sensor.TYPE_ACCELEROMETER;
                 msg.setData(bundle);
-
-
-                msgStr = new String("time:"+curTime+"x:"+sensorEvent.values[0]+"y:"+sensorEvent.values[1]+"z:"+sensorEvent.values[2]+"\r\n");
+                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
                 smsg.what = Sensor.TYPE_ACCELEROMETER;
                 smsg.obj = msgStr;
-
                 break;
+            case Sensor.TYPE_GRAVITY:
+                bundle.putString("t", ""+curTime);
+                bundle.putString("x",""+sensorEvent.values[0]);
+                bundle.putString("y",""+sensorEvent.values[1]);
+                bundle.putString("z",""+sensorEvent.values[2]);
+                msg.what = Sensor.TYPE_GRAVITY;
+                msg.setData(bundle);
+                msgStr = new String(Sensor.TYPE_GRAVITY + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+                smsg.what = Sensor.TYPE_GRAVITY;
+                smsg.obj = msgStr;
+                break;
+
         }
         handler.sendMessage(msg);
         if(clientThread.sendHandler!=null) {
@@ -135,10 +160,16 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            Bundle bundle = msg.getData();
             switch (msg.what) {
                 case Sensor.TYPE_ACCELEROMETER:
-                    Bundle bundle = msg.getData();
-                    sysTimeTxv.setText("T:"+bundle.getString("time"));
+                    sysTimeTxv.setText("T:"+bundle.getString("t"));
+                    xTxv.setText("x:"+bundle.getString("x"));
+                    yTxv.setText("y:"+bundle.getString("y"));
+                    zTxv.setText("z:"+bundle.getString("z"));
+                    break;
+                case Sensor.TYPE_GRAVITY:
+                    sysTimeTxv.setText("T:"+bundle.getString("t"));
                     xTxv.setText("x:"+bundle.getString("x"));
                     yTxv.setText("y:"+bundle.getString("y"));
                     zTxv.setText("z:"+bundle.getString("z"));

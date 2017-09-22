@@ -33,7 +33,7 @@ public class SocketThread implements Runnable {
     @Override
     public void run() {
         try {
-            Log.d("Debug", "try to connect to "+IP+":"+PORT);
+           // Log.d("Debug", "try to connect to "+IP+":"+PORT);
            // s = new Socket(IP, PORT);
             s = new Socket();
             s.connect(new InetSocketAddress(IP, PORT),60000);//timeout == 6s
@@ -43,7 +43,7 @@ public class SocketThread implements Runnable {
                 @Override
                 public void handleMessage(Message msg) {
                     super.handleMessage(msg);
-                    if(msg.what == Sensor.TYPE_ACCELEROMETER) {
+                    if(msg.what == Sensor.TYPE_ACCELEROMETER ||msg.what == Sensor.TYPE_GRAVITY) {
                         try {
                             os.write(msg.obj.toString().getBytes("utf-8"));
                             Log.e("Sensor:", msg.obj.toString() );
