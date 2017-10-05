@@ -10,6 +10,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button sensorBtn;
     private Button IPBtn;
+    public static boolean FIRSTRUN_B = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

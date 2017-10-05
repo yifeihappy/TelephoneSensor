@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by yifeihappy on 2017/8/30.
@@ -21,20 +22,19 @@ import java.io.IOException;
 
 public class SenSorActivity extends Activity implements SensorEventListener{
 
-    private SensorManager mSensorManage;
+    public SensorManager sensorManage;
     private Sensor mAccelerometer;
     private Sensor mGravity;
     private Sensor mGyroscope;
     private TextView xTxv,yTxv,zTxv,sysTimeTxv;
-    private Handler handler;
-    private SocketThread clientThread;
+    public Handler handlerUI;
+    private SocketThread threadSocket;
     private String msgStr;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sensor_layout);
-
-       // Log.d("IP", SocketThread.IP);
 
         xTxv = (TextView)findViewById(R.id.x);
         yTxv = (TextView)findViewById(R.id.y);
@@ -42,65 +42,100 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         sysTimeTxv = (TextView)findViewById(R.id.sys_time);
 
         //get the sensor manager object.
-        mSensorManage = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        //get sensor type.
-        mAccelerometer = mSensorManage.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mGravity = mSensorManage.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        sensorManage = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        handlerUI = new UIHandler();
 
-
-        handler = new mHandler();
-
-
+        threadSocket = new SocketThread(handlerUI, sensorManage, this);
+        new Thread(threadSocket).start();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+//        threadSocket = new SocketThread(handlerUI, sensorManage, this);
+//        new Thread(threadSocket).start();
 
-
-        clientThread = new SocketThread(handler);
-        new Thread(clientThread).start();
-
-        //regist accelerometer
-        mSensorManage.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManage.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        mSensorManage.unregisterListener(this);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if(clientThread.os != null) {
+//        if(threadSocket.os != null) {
+//            try {
+//                threadSocket.os.close();
+//                Log.d("DEB","os.close()");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } finally {
+//                try
+//                {
+//                    if(threadSocket.br != null)
+//                    {
+//                        threadSocket.br.close();
+//                        Log.d("DEB", "br.close()");
+//                    }
+//                }
+//                catch (IOException e)
+//                {
+//                    e.printStackTrace();
+//                }
+//                finally {
+//                    if(threadSocket.s != null) {
+//                        try {
+//                            threadSocket.s.close();
+//                            Log.d("DEB","s.close");
+//                        } catch (IOException e1) {
+//                            e1.printStackTrace();
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(threadSocket.os != null) {
             try {
-                clientThread.os.close();
+                threadSocket.os.close();
                 Log.d("DEB","os.close()");
             } catch (IOException e) {
                 e.printStackTrace();
-                if(clientThread.s != null) {
-                    try {
-                        clientThread.s.close();
-                        Log.d("DEB","s.close");
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+            } finally {
+                try
+                {
+                    if(threadSocket.br != null)
+                    {
+                        threadSocket.br.close();
+                        Log.d("DEB", "br.close()");
                     }
                 }
-            } finally {
-                if(clientThread.s != null) {
-                    try {
-                        clientThread.s.close();
-                        Log.d("DEB","s.close");
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+                finally {
+                    if(threadSocket.s != null) {
+                        try {
+                            threadSocket.s.close();
+                            Log.d("DEB","s.close");
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
                     }
                 }
             }
         }
+        sensorManage.unregisterListener(this);
 
     }
 
@@ -109,46 +144,48 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         float x, y, z;
         int sensorType = sensorEvent.sensor.getType();
         long curTime = System.currentTimeMillis();
-        Message msg = Message.obtain();
-        Message smsg = Message.obtain();
+        Message msgUI = Message.obtain();
+        Message msgSocket = Message.obtain();
+        msgSocket.obj = null;
         Bundle bundle = new Bundle();
         switch (sensorType)
         {
+            //需要添加传感器类型在这里添加case分支
             case Sensor.TYPE_ACCELEROMETER:
                 bundle.putString("t", ""+curTime);
                 bundle.putString("x",""+sensorEvent.values[0]);
                 bundle.putString("y",""+sensorEvent.values[1]);
                 bundle.putString("z",""+sensorEvent.values[2]);
-                msg.what = Sensor.TYPE_ACCELEROMETER;
-                msg.setData(bundle);
-                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-                smsg.what = Sensor.TYPE_ACCELEROMETER;
-                smsg.obj = msgStr;
+                msgUI.what = Sensor.TYPE_ACCELEROMETER;
+                msgUI.setData(bundle);
+                handlerUI.sendMessage(msgUI);//更新UI
+
+                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\n");
+                msgSocket.what = Sensor.TYPE_ACCELEROMETER;
+                msgSocket.obj = msgStr;
                 break;
             case Sensor.TYPE_GRAVITY:
-                bundle.putString("t", ""+curTime);
-                bundle.putString("x",""+sensorEvent.values[0]);
-                bundle.putString("y",""+sensorEvent.values[1]);
-                bundle.putString("z",""+sensorEvent.values[2]);
-                msg.what = Sensor.TYPE_GRAVITY;
-                msg.setData(bundle);
                 msgStr = new String(Sensor.TYPE_GRAVITY + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-                smsg.what = Sensor.TYPE_GRAVITY;
-                smsg.obj = msgStr;
+                msgSocket.what = Sensor.TYPE_GRAVITY;
+                msgSocket.obj = msgStr;
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                msgStr = new String(Sensor.TYPE_MAGNETIC_FIELD + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+                msgSocket.what = Sensor.TYPE_MAGNETIC_FIELD;
+                msgSocket.obj = msgStr;
+                break;
+            case Sensor.TYPE_GYROSCOPE:
+                msgStr = new String(Sensor.TYPE_GYROSCOPE + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+                msgSocket.what = Sensor.TYPE_GYROSCOPE;
+                msgSocket.obj = msgStr;
                 break;
 
         }
-        handler.sendMessage(msg);
-        if(clientThread.sendHandler!=null) {
-            clientThread.sendHandler.sendMessage(smsg);
+
+
+        if(threadSocket.sendHandler!=null && !threadSocket.s.isClosed() && msgSocket.obj != null) {
+            threadSocket.sendHandler.sendMessage(msgSocket);
         }
-        //make sure that telephone has connected to the server.
-//        if(clientThread.os != null) {
-//            Thread t = new SendDataThread(clientThread.os, msgStr, handler);
-//            t.start();
-//        }
-
-
     }
 
     @Override
@@ -156,19 +193,13 @@ public class SenSorActivity extends Activity implements SensorEventListener{
 
     }
 
-    class  mHandler extends Handler {
+    class  UIHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             Bundle bundle = msg.getData();
             switch (msg.what) {
                 case Sensor.TYPE_ACCELEROMETER:
-                    sysTimeTxv.setText("T:"+bundle.getString("t"));
-                    xTxv.setText("x:"+bundle.getString("x"));
-                    yTxv.setText("y:"+bundle.getString("y"));
-                    zTxv.setText("z:"+bundle.getString("z"));
-                    break;
-                case Sensor.TYPE_GRAVITY:
                     sysTimeTxv.setText("T:"+bundle.getString("t"));
                     xTxv.setText("x:"+bundle.getString("x"));
                     yTxv.setText("y:"+bundle.getString("y"));
@@ -183,6 +214,11 @@ public class SenSorActivity extends Activity implements SensorEventListener{
                     Toast.makeText(SenSorActivity.this, "send data to server failed!", Toast.LENGTH_LONG).show();
                     Log.e("E","fail to send data to the server");
                     finish();
+                    break;
+                case Sensor.TYPE_GRAVITY:
+                case Sensor.TYPE_MAGNETIC_FIELD:
+                case Sensor.TYPE_GYROSCOPE:
+                    sysTimeTxv.setText("T:"+bundle.getString("t"));
                     break;
             }
         }
