@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,10 +31,12 @@ public class SenSorActivity extends Activity implements SensorEventListener{
     public Handler handlerUI;
     private SocketThread threadSocket;
     private String msgStr;
+    StringBuffer msgStrbuffer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.sensor_layout);
 
         xTxv = (TextView)findViewById(R.id.x);
@@ -148,39 +151,67 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         Message msgSocket = Message.obtain();
         msgSocket.obj = null;
         Bundle bundle = new Bundle();
-        switch (sensorType)
+        if(sensorType == Sensor.TYPE_ACCELEROMETER)
         {
-            //需要添加传感器类型在这里添加case分支
-            case Sensor.TYPE_ACCELEROMETER:
-                bundle.putString("t", ""+curTime);
-                bundle.putString("x",""+sensorEvent.values[0]);
-                bundle.putString("y",""+sensorEvent.values[1]);
-                bundle.putString("z",""+sensorEvent.values[2]);
-                msgUI.what = Sensor.TYPE_ACCELEROMETER;
-                msgUI.setData(bundle);
-                handlerUI.sendMessage(msgUI);//更新UI
-
-                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\n");
-                msgSocket.what = Sensor.TYPE_ACCELEROMETER;
-                msgSocket.obj = msgStr;
-                break;
-            case Sensor.TYPE_GRAVITY:
-                msgStr = new String(Sensor.TYPE_GRAVITY + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-                msgSocket.what = Sensor.TYPE_GRAVITY;
-                msgSocket.obj = msgStr;
-                break;
-            case Sensor.TYPE_MAGNETIC_FIELD:
-                msgStr = new String(Sensor.TYPE_MAGNETIC_FIELD + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-                msgSocket.what = Sensor.TYPE_MAGNETIC_FIELD;
-                msgSocket.obj = msgStr;
-                break;
-            case Sensor.TYPE_GYROSCOPE:
-                msgStr = new String(Sensor.TYPE_GYROSCOPE + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-                msgSocket.what = Sensor.TYPE_GYROSCOPE;
-                msgSocket.obj = msgStr;
-                break;
-
+            bundle.putString("t", ""+curTime);
+            bundle.putString("x",""+sensorEvent.values[0]);
+            bundle.putString("y",""+sensorEvent.values[1]);
+            bundle.putString("z",""+sensorEvent.values[2]);
+            msgUI.what = Sensor.TYPE_ACCELEROMETER;
+            msgUI.setData(bundle);
+            handlerUI.sendMessage(msgUI);//更新UI
         }
+
+        if(sensorEvent.values.length != 0)
+        {
+            msgStrbuffer = new StringBuffer();
+            msgStrbuffer.append(sensorType + "," + curTime);
+            for(int i=0; i<sensorEvent.values.length; i++)
+            {
+                msgStrbuffer.append(","+sensorEvent.values[i]);
+            }
+            msgStrbuffer.append("\r\n");
+            msgSocket.what = sensorType;
+            Log.d("EVENT", msgStrbuffer.toString());
+            msgSocket.obj = msgStrbuffer.toString();
+        }
+
+
+
+//        switch (sensorType)
+//        {
+//            //需要添加传感器类型在这里添加case分支
+//            case Sensor.TYPE_ACCELEROMETER:
+//                bundle.putString("t", ""+curTime);
+//                bundle.putString("x",""+sensorEvent.values[0]);
+//                bundle.putString("y",""+sensorEvent.values[1]);
+//                bundle.putString("z",""+sensorEvent.values[2]);
+//                msgUI.what = Sensor.TYPE_ACCELEROMETER;
+//                msgUI.setData(bundle);
+//                handlerUI.sendMessage(msgUI);//更新UI
+//
+//                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\n");
+//                msgSocket.what = Sensor.TYPE_ACCELEROMETER;
+//                msgSocket.obj = msgStr;
+//                break;
+//            case Sensor.TYPE_GRAVITY:
+//                msgStr = new String(Sensor.TYPE_GRAVITY + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+//                msgSocket.what = Sensor.TYPE_GRAVITY;
+//                msgSocket.obj = msgStr;
+//                break;
+//            case Sensor.TYPE_MAGNETIC_FIELD:
+//                msgStr = new String(Sensor.TYPE_MAGNETIC_FIELD + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+//                msgSocket.what = Sensor.TYPE_MAGNETIC_FIELD;
+//                msgSocket.obj = msgStr;
+//                break;
+//            case Sensor.TYPE_GYROSCOPE:
+//                msgStr = new String(Sensor.TYPE_GYROSCOPE + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
+//                msgSocket.what = Sensor.TYPE_GYROSCOPE;
+//                msgSocket.obj = msgStr;
+//                break;
+//
+//
+//        }
 
 
         if(threadSocket.sendHandler!=null && !threadSocket.s.isClosed() && msgSocket.obj != null) {

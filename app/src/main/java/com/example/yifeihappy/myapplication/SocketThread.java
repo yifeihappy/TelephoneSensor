@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class SocketThread implements Runnable {
 
-    public static String IP = "192.168.10.105";
+    public static String IP = "192.168.10.102";
     public static int PORT = 30000;
     public Socket s = null;
     public OutputStream os = null;
@@ -113,6 +113,7 @@ public class SocketThread implements Runnable {
                     //if(msg.what == Sensor.TYPE_ACCELEROMETER ||msg.what == Sensor.TYPE_GRAVITY) {
                     try {
                         os.write(msg.obj.toString().getBytes("utf-8"));
+                        os.flush();
                         Log.d("Sensor:", msg.obj.toString());
                     } catch (IOException e) {
                         //e.printStackTrace();
