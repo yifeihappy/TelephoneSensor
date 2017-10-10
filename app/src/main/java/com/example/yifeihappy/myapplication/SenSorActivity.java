@@ -165,7 +165,7 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         if(sensorEvent.values.length != 0)
         {
             msgStrbuffer = new StringBuffer();
-            msgStrbuffer.append(sensorType + "," + curTime);
+            msgStrbuffer.append(sensorType + "," + curTime + "," + sensorEvent.values.length);
             for(int i=0; i<sensorEvent.values.length; i++)
             {
                 msgStrbuffer.append(","+sensorEvent.values[i]);
