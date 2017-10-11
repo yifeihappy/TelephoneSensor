@@ -14,7 +14,7 @@ import android.widget.TextView;
 
 public class SetIPActivity extends Activity {
     private Button ipBtn;
-    private TextView ipEdt;
+    private EditText ipEdt;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

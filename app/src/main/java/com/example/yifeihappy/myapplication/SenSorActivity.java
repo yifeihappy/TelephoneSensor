@@ -24,13 +24,13 @@ import java.util.List;
 public class SenSorActivity extends Activity implements SensorEventListener{
 
     public SensorManager sensorManage;
-    private Sensor mAccelerometer;
-    private Sensor mGravity;
-    private Sensor mGyroscope;
+  //  private Sensor mAccelerometer;
+   // private Sensor mGravity;
+    //private Sensor mGyroscope;
     private TextView xTxv,yTxv,zTxv,sysTimeTxv;
     public Handler handlerUI;
     private SocketThread threadSocket;
-    private String msgStr;
+    //private String msgStr;
     StringBuffer msgStrbuffer;
 
     @Override
@@ -144,16 +144,18 @@ public class SenSorActivity extends Activity implements SensorEventListener{
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        float x, y, z;
+        //float x, y, z;
         int sensorType = sensorEvent.sensor.getType();
-        long curTime = System.currentTimeMillis();
+       // long curTime = System.currentTimeMillis();
+       // long eventTime = sensorEvent.timestamp;
+        long eventTime = System.currentTimeMillis();
         Message msgUI = Message.obtain();
         Message msgSocket = Message.obtain();
         msgSocket.obj = null;
         Bundle bundle = new Bundle();
         if(sensorType == Sensor.TYPE_ACCELEROMETER)
         {
-            bundle.putString("t", ""+curTime);
+            bundle.putString("t", ""+eventTime);
             bundle.putString("x",""+sensorEvent.values[0]);
             bundle.putString("y",""+sensorEvent.values[1]);
             bundle.putString("z",""+sensorEvent.values[2]);
@@ -165,7 +167,7 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         if(sensorEvent.values.length != 0)
         {
             msgStrbuffer = new StringBuffer();
-            msgStrbuffer.append(sensorType + "," + curTime + "," + sensorEvent.values.length);
+            msgStrbuffer.append(sensorType + "," + eventTime + "," + sensorEvent.values.length);
             for(int i=0; i<sensorEvent.values.length; i++)
             {
                 msgStrbuffer.append(","+sensorEvent.values[i]);
@@ -176,42 +178,6 @@ public class SenSorActivity extends Activity implements SensorEventListener{
             msgSocket.obj = msgStrbuffer.toString();
         }
 
-
-
-//        switch (sensorType)
-//        {
-//            //需要添加传感器类型在这里添加case分支
-//            case Sensor.TYPE_ACCELEROMETER:
-//                bundle.putString("t", ""+curTime);
-//                bundle.putString("x",""+sensorEvent.values[0]);
-//                bundle.putString("y",""+sensorEvent.values[1]);
-//                bundle.putString("z",""+sensorEvent.values[2]);
-//                msgUI.what = Sensor.TYPE_ACCELEROMETER;
-//                msgUI.setData(bundle);
-//                handlerUI.sendMessage(msgUI);//更新UI
-//
-//                msgStr = new String(Sensor.TYPE_ACCELEROMETER + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\n");
-//                msgSocket.what = Sensor.TYPE_ACCELEROMETER;
-//                msgSocket.obj = msgStr;
-//                break;
-//            case Sensor.TYPE_GRAVITY:
-//                msgStr = new String(Sensor.TYPE_GRAVITY + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-//                msgSocket.what = Sensor.TYPE_GRAVITY;
-//                msgSocket.obj = msgStr;
-//                break;
-//            case Sensor.TYPE_MAGNETIC_FIELD:
-//                msgStr = new String(Sensor.TYPE_MAGNETIC_FIELD + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-//                msgSocket.what = Sensor.TYPE_MAGNETIC_FIELD;
-//                msgSocket.obj = msgStr;
-//                break;
-//            case Sensor.TYPE_GYROSCOPE:
-//                msgStr = new String(Sensor.TYPE_GYROSCOPE + ","+curTime+","+sensorEvent.values[0]+","+sensorEvent.values[1]+","+sensorEvent.values[2]+"\r\n");
-//                msgSocket.what = Sensor.TYPE_GYROSCOPE;
-//                msgSocket.obj = msgStr;
-//                break;
-//
-//
-//        }
 
 
         if(threadSocket.sendHandler!=null && !threadSocket.s.isClosed() && msgSocket.obj != null) {
