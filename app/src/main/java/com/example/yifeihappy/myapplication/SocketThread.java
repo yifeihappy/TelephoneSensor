@@ -24,7 +24,7 @@ import java.util.Set;
 
 public class SocketThread implements Runnable {
 
-    public static String IP = "192.168.10.102";
+    public static String IP = null;
     public static int PORT = 30000;
     public Socket s = null;
     public OutputStream os = null;
@@ -36,10 +36,11 @@ public class SocketThread implements Runnable {
     SensorEventListener sensorEventListener = null;
     private int SAMPLINGPERIODUS = 3;//default NORMAL
 
-    public SocketThread(Handler h, SensorManager sensorManager, SensorEventListener sensorEventListener) {
+    public SocketThread(Handler h, SensorManager sensorManager, SensorEventListener sensorEventListener, String IP) {
         uiHander = h;
         this.sensorManage = sensorManager;
         this.sensorEventListener = sensorEventListener;
+        this.IP = IP;
 
         //获取传感器的集合
         List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);

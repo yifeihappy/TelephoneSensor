@@ -2,6 +2,7 @@ package com.example.yifeihappy.myapplication;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -32,12 +33,23 @@ public class SenSorActivity extends Activity implements SensorEventListener{
     private SocketThread threadSocket;
     //private String msgStr;
     StringBuffer msgStrbuffer;
+    String IP = null;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.sensor_layout);
+
+        preferences = getSharedPreferences("IP", Context.MODE_PRIVATE);
+        IP = preferences.getString("IP", null);
+        if(IP == null)
+        {
+            finish();
+        }
+        //Log.d("IP",IP);
+
 
         xTxv = (TextView)findViewById(R.id.x);
         yTxv = (TextView)findViewById(R.id.y);
@@ -48,7 +60,7 @@ public class SenSorActivity extends Activity implements SensorEventListener{
         sensorManage = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         handlerUI = new UIHandler();
 
-        threadSocket = new SocketThread(handlerUI, sensorManage, this);
+        threadSocket = new SocketThread(handlerUI, sensorManage, this, IP);
         new Thread(threadSocket).start();
     }
 

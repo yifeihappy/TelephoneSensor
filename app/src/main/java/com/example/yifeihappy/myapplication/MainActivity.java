@@ -1,6 +1,8 @@
 package com.example.yifeihappy.myapplication;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -11,6 +13,7 @@ public class MainActivity extends AppCompatActivity {
     private Button sensorBtn;
     private Button IPBtn;
     public static boolean FIRSTRUN_B = false;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,5 +39,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        preferences = getSharedPreferences("IP", Context.MODE_PRIVATE);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(preferences.getString("IP",null)==null)
+        {
+            sensorBtn.setEnabled(false);
+        }else
+        {
+            sensorBtn.setEnabled(true);
+        }
     }
 }
